@@ -3,6 +3,7 @@
 
 import os
 import orjson as json
+from pathlib import Path
 
 
 def jsonl_generator(fname):
@@ -19,8 +20,7 @@ def jsonl_generator(fname):
 
 def get_batch_files(fdir):
     """ Returns paths to files in fdir """
-    filenames = os.listdir(fdir)
-    filenames = [os.path.join(fdir, f) for f in filenames]
+    filenames = [p.resolve() for p in Path(fdir).iterdir()]
     print(f"Fetched {len(filenames)} files from {fdir}")
     return filenames
 
