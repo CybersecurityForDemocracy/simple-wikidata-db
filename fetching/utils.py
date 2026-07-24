@@ -2,7 +2,7 @@
 """
 
 import os
-import ujson as json
+import orjson as json
 
 
 def jsonl_generator(fname):

@@ -1,8 +1,7 @@
 from collections import defaultdict
 from multiprocessing import Queue
 
-# properties which encode some alias/name
-import ujson
+import orjson
 
 ALIAS_PROPERTIES = {'P138', 'P734', 'P735', 'P742', 'P1448', 'P1449', 'P1477', 'P1533', 'P1549', 'P1559', 'P1560',
                     'P1635', 'P1705', 'P1782', 'P1785', 'P1786', 'P1787', 'P1810', 'P1813', 'P1814', 'P1888', 'P1950',
@@ -148,5 +147,5 @@ def process_data(language_id: str, work_queue: Queue, out_queue: Queue):
             break
         if len(json_obj) == 0:
             continue
-        out_queue.put(process_json(ujson.loads(json_obj), language_id))
+        out_queue.put(process_json(orjson.loads(json_obj), language_id))
     return

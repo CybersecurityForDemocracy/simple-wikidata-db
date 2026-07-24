@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "simple-wikidata-db"
+dynamic = ["version"]
+readme = "README.md"
+license = ""
+
+dependencies = [
+  "tqdm"
+  "orjson"
+]
+
+[tool.hatch.version]
+path = "simple_wikidata_db/__version__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/simple_wikidata_db",
+]
