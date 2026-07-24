@@ -15,7 +15,7 @@ IGNORE = {'wikibase-lexeme', 'musical-notation', 'globe-coordinate', 'commonsMed
 
 
 def process_mainsnak(data, language_id):
-    datatype = data['datatype']
+    datatype = data.get('datatype')
     if datatype == 'string':
         return data['datavalue']['value']
     elif datatype == 'monolingualtext':
@@ -88,7 +88,7 @@ def process_json(obj, language_id="en"):
             if not claim['mainsnak']['snaktype'] == 'value':
                 continue
             claim_id = claim['id']
-            datatype = claim['mainsnak']['datatype']
+            datatype = claim['mainsnak'].get('datatype')
             value = process_mainsnak(claim['mainsnak'], language_id)
 
             if value is None:
