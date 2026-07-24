@@ -6,11 +6,10 @@ build-backend = "hatchling.build"
 name = "simple-wikidata-db"
 dynamic = ["version"]
 readme = "README.md"
-license = ""
 
 dependencies = [
-  "tqdm"
-  "orjson"
+  "tqdm",
+  "orjson",
 ]
 
 [tool.hatch.version]
@@ -18,5 +17,8 @@ path = "simple_wikidata_db/__version__.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/simple_wikidata_db",
+    "simple_wikidata_db",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["simple_wikidata_db"]
