@@ -11,8 +11,8 @@ def jsonl_generator(fname):
         line = line.strip()
         if len(line) < 3:
             d = {}
-        elif line[len(line) - 1] == ',':
-            d = json.loads(line[:len(line) - 1])
+        elif line[:-1] == ',':
+            d = json.loads(line[:-1])
         else:
             d = json.loads(line)
         yield d
