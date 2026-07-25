@@ -73,7 +73,7 @@ def main():
 
     write_process = Process(
         target=write_data,
-        args=(uri, database, collection, total_num_lines, output_queue)
+        args=(uri, args.database, args.collection, args.total_num_lines, output_queue)
     )
     write_process.start()
 
