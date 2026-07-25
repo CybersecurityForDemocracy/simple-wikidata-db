@@ -33,7 +33,7 @@ def get_arg_parser():
     parser.add_argument('--num_lines_read', type=int, default=-1,
                         help='Terminate after num_lines_read lines are read. Useful for debugging.')
     parser.add_argument('--num_lines_in_dump', type=int, default=-1, help='Number of lines in dump. If -1, we will count the number of lines.')
-    parser.add_argument('--debug', type=bool, action='store_true', help='enable debug logging')
+    parser.add_argument('--debug', action='store_true', help='enable debug logging')
     return parser
 
 
