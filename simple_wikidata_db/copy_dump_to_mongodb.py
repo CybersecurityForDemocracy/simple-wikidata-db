@@ -9,6 +9,7 @@ python3 preprocess_dump.py \
     --out_dir data/processed
 
 """
+import logging
 import argparse
 import multiprocessing
 from multiprocessing import Queue, Process
@@ -43,10 +44,13 @@ def main():
     #  out_dir = Path(args.out_dir)
     #  out_dir.mkdir(exist_ok=True, parents=True)
     uri = args.uri
+    database = args.database
+    collection = args.collection
 
     input_file = Path(args.input_file)
     assert input_file.exists(), f"Input file {input_file} does not exist"
 
+    logging.info("Will write entities from %s to URI: %s database: %s collection: %s", input_file, uri, database, collection)
 
     max_lines_to_read = args.num_lines_read
     if args.num_lines_in_dump <= 0:
@@ -73,7 +77,7 @@ def main():
 
     write_process = Process(
         target=write_data,
-        args=(uri, args.database, args.collection, args.total_num_lines, output_queue)
+        args=(uri, database, collection, total_num_lines, output_queue)
     )
     write_process.start()
 
