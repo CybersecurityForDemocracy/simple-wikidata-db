@@ -23,7 +23,7 @@ class MongoDbWriter:
     num_lines_written: int = field(default=0)
 
     def __post_init__(self):
-        self.client = MongoClient(uri)
+        self.client = MongoClient(self.uri)
         database = self.client.get_database(self.database_name)
         self.collection_client = database.get_collection(self.collection_name)
         self.last_time_estimate_report_time = time.time()
