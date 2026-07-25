@@ -10,6 +10,7 @@ readme = "README.md"
 dependencies = [
   "tqdm",
   "orjson",
+  "pymongo",
 ]
 
 [tool.hatch.version]
