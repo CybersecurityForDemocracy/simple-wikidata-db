@@ -17,7 +17,7 @@ import time
 
 from simple_wikidata_db.preprocess_utils.reader_process import count_lines, read_data
 from simple_wikidata_db.preprocess_utils.mongodb_worker_process import process_data
-from simple_wikidata_db.preprocess_utils.mongo_db_writer_process import write_data
+from simple_wikidata_db.preprocess_utils.mongodb_writer_process import write_data
 
 
 def get_arg_parser():
