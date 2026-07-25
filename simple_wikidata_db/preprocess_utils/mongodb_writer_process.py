@@ -42,17 +42,17 @@ class MongoDbWriter:
     def close(self):
         self.client.close()
 
-def write_data(uri: str, database: str, collection: str, expected_total_num_lines: int, output_queue: Queue):
+def write_data(uri: str, database_name: str, collection_name: str, expected_total_num_lines: int, output_queue: Queue):
     """
-    Reads the json objects from output queue and writes them to mongo db URI database collection
+    Reads the json objects from output queue and writes them to mongo db URI database_name collection_name
     :param uri: mongo db connection uri to write to
-    :param database: mongo db database name to write to
-    :param collection: mongo db collection name to write to
+    :param database_name: mongo db database name to write to
+    :param collection_name: mongo db collection name to write to
     :param expected_total_num_lines: number of expected lines input. used for estimated time to
     completion.
     :param work_queue: Queue to push the data to.
     """
-    writer = MongoDbWriter(uri=uri, database=database, collection=collection,
+    writer = MongoDbWriter(uri=uri, database_name=database_name, collection_name=collection_name,
                            expected_total_num_lines=expected_total_num_lines)
     while True:
         json_object = output_queue.get()
