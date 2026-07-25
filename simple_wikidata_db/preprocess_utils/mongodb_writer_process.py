@@ -34,9 +34,9 @@ class MongoDbWriter:
         logging.info("%d/%d lines written in %.2f s. Estimated time to completion is %.2f hours.", self.num_lines_written, self.total_num_lines, time_elapsed, estimated_time)
         self.last_time_estimate_report_time = time.time()
 
-    def write(self, json_obj_list: list[dict[str, Any]]):
+    def write(self, json_obj: dict[str, Any]):
         logging.debug("insert_many: %r")
-        self.collection_client.insert_one(json_obj_list)
+        self.collection_client.insert_one(json_obj)
         self.num_lines_written += 1
         if self.num_lines_written % TIME_ESTIMATE_REPORT_NUM_LINES == 0:
             self._report_time_elaspsed_and_restart_timer()
