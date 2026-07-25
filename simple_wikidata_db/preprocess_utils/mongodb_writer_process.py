@@ -35,6 +35,7 @@ class MongoDbWriter:
         self.last_time_estimate_report_time = time.time()
 
     def write(self, json_obj_list: list[dict[str, Any]]):
+        logging.debug("insert_many: %r")
         self.collection_client.insert_many(json_obj_list)
         self.num_lines_written += 1
         if self.num_lines_written % TIME_ESTIMATE_REPORT_NUM_LINES == 0:
