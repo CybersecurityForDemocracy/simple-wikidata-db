@@ -30,8 +30,8 @@ class MongoDbWriter:
 
     def _report_time_elaspsed_and_restart_timer(self):
         time_elapsed = time.time() - self.last_time_estimate_report_time
-        estimated_time = time_elapsed * (self.total_num_lines - self.num_lines_written) / (TIME_ESTIMATE_REPORT_NUM_LINES*3600)
-        logging.info("%d/%d lines written in %.2f s. Estimated time to completion is %.2f hours.", self.num_lines_written, self.total_num_lines, time_elapsed, estimated_time)
+        estimated_time = time_elapsed * (self.expected_total_num_lines - self.num_lines_written) / (TIME_ESTIMATE_REPORT_NUM_LINES*3600)
+        logging.info("%d/%d lines written in %.2f s. Estimated time to completion is %.2f hours.", self.num_lines_written, self.expected_total_num_lines, time_elapsed, estimated_time)
         self.last_time_estimate_report_time = time.time()
 
     def write(self, json_obj: dict[str, Any]):
