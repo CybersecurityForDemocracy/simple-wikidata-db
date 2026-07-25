@@ -74,7 +74,7 @@ def main():
     num_lines_read = multiprocessing.Value("i", 0)
     read_process = Process(
         target=read_data,
-        args=(input_file, num_lines_read, max_lines_to_read, output_queue)
+        args=(input_file, num_lines_read, max_lines_to_read, work_queue)
     )
 
     read_process.start()
