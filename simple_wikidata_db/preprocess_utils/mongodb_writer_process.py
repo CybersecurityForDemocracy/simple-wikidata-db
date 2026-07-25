@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from multiprocessing import Queue
 
 from pymongo import MongoClient
+from pymongo.collection import Collection
 import orjson as json
 
 from typing import Any
@@ -18,7 +19,7 @@ class MongoDbWriter:
     expected_total_num_lines: int
     last_time_estimate_report_time: float = field(init=False)
     client: MongoClient = field(init=False)
-    collection_client: field(init=False)
+    collection_client: Collection = field(init=False)
     num_lines_written: int = field(default=0)
 
     def __post_init__(self):
