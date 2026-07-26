@@ -1,4 +1,4 @@
-""" Wikidata Dump Processor
+"""Wikidata Dump Processor
 
 This script preprocesses the raw Wikidata dump (in gz or bz2 compressed JSON format) and copies
 those to mongodb
@@ -15,8 +15,8 @@ from multiprocessing import Process, Queue
 from pathlib import Path
 from typing import Annotated
 
-import typer
 import orjson
+import typer
 from pymongo import MongoClient
 
 from simple_wikidata_db.preprocess_utils.mongodb_worker_process import process_data
@@ -136,7 +136,9 @@ def main(
     logging.info("Finished processing %s in %s s", num_lines_read.value, time.time() - start)
 
 
-@APP.command(help="Add sqid data to existing wikidata entities in mongodb. expects JSON from https://sqid.toolforge.org/#/")
+@APP.command(
+    help="Add sqid data to existing wikidata entities in mongodb. expects JSON from https://sqid.toolforge.org/#/"
+)
 def sqid(
     input_file: Annotated[
         Path,
@@ -154,8 +156,6 @@ def sqid(
     collection: Annotated[str, typer.Option(help="collection for mongodb")],
     debug: Annotated[bool, typer.Option(help="enable debug logging")] = False,
 ):
-    start = time.time()
-
     logging.basicConfig(
         format=DEBUG_LOG_FORMAT if debug else DEFAULT_LOG_FORMAT,
         datefmt="%Y-%m-%d %H:%M:%S",
@@ -180,8 +180,8 @@ def sqid(
     logging.info("Got %d entires from %s", len(sqid_hiearchy), input_file)
     for qid, value in sqid_hiearchy.items():
         update_result = collection_client.update_one(
-            {"id": f'Q{qid}'},
-            {"$set": {'sqid': value}}, upsert=False)
+            {"id": f"Q{qid}"}, {"$set": {"sqid": value}}, upsert=False
+        )
         if update_result:
             logging.debug("qid %s update result: %s", qid)
             modified_count += update_result.modified_count
@@ -189,6 +189,7 @@ def sqid(
             logging.warning("qid %s update result false ", qid)
 
     logging.info("Of %d entries modified %d", len(sqid_hiearchy), modified_count)
+
 
 if __name__ == "__main__":
     APP()
