@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+import orjson
+from pymongo import MongoClient
 
 from simple_wikidata_db.preprocess_utils.mongodb_worker_process import process_data
 from simple_wikidata_db.preprocess_utils.mongodb_writer_process import write_data
@@ -133,6 +135,60 @@ def main(
 
     logging.info("Finished processing %s in %s s", num_lines_read.value, time.time() - start)
 
+
+@APP.command(help="Add sqid data to existing wikidata entities in mongodb. expects JSON from https://sqid.toolforge.org/#/")
+def sqid(
+    input_file: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            file_okay=True,
+            dir_okay=False,
+            readable=True,
+            resolve_path=True,
+            help="sqid hierarchy JSON file",
+        ),
+    ],
+    uri: Annotated[str, typer.Option(help="uri for mongodb")],
+    database: Annotated[str, typer.Option(help="database for mongodb")],
+    collection: Annotated[str, typer.Option(help="collection for mongodb")],
+    debug: Annotated[bool, typer.Option(help="enable debug logging")] = False,
+):
+    start = time.time()
+
+    logging.basicConfig(
+        format=DEBUG_LOG_FORMAT if debug else DEFAULT_LOG_FORMAT,
+        datefmt="%Y-%m-%d %H:%M:%S",
+        level=logging.DEBUG if debug else logging.INFO,
+    )
+
+    logging.info(
+        "Will write entities from %s to URI: %s database: %s collection: %s",
+        input_file,
+        uri,
+        database,
+        collection,
+    )
+
+    client = MongoClient(uri)
+    database = client.get_database(database)
+    collection_client = database.get_collection(collection)
+
+    modified_count = 0
+
+    sqid_hiearchy = orjson.loads(input_file.read_bytes())
+    logging.info("Got %d entires from %s", len(sqid_hiearchy), input_file)
+    for qid, value in sqid_hiearchy.items():
+        update_result = collection_client.update_one(
+            {"id": f'Q{qid}'},
+            {"$set": {'sqid': value}}, upsert=False)
+        if update_result:
+            logging.debug("qid %s update result: %s", qid)
+            modified_count += update_result.modified_count
+        else:
+            logging.warning("qid %s update result false ", qid)
+
+    logging.info("Of %d entries modified %d", len(sqid_hiearchy), modified_count)
 
 if __name__ == "__main__":
     APP()
