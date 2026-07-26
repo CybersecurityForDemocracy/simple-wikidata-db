@@ -1,29 +1,25 @@
 """ Wikidata Dump Processor
 
-This script preprocesses the raw Wikidata dump (in JSON format) and sorts triples into 8 "tables": labels, descriptions, aliases, entity_rels, external_ids, entity_values, qualifiers, and wikipedia_links. See the README for more information on each table.
+This script preprocesses the raw Wikidata dump (in gz or bz2 compressed JSON format) and copies
+those to mongodb
 
-Example command:
-
-python3 preprocess_dump.py \
-    --input_file /lfs/raiders8/0/lorr1/wikidata/raw_data/latest-all.json.gz \
-    --out_dir data/processed
-
+python3 -m simple_wikidata_db.copy_dump_to_mongodb
+/lfs/raiders8/0/lorr1/wikidata/raw_data/latest-all.json.gz --uri 'mongodb://127.0.0.1:999/'
+--database 'wikidata' --collection 'entities' --index 'id'
 """
 
 import logging
-import argparse
 import multiprocessing
-from multiprocessing import Queue, Process
-from pathlib import Path
 import time
+from multiprocessing import Process, Queue
+from pathlib import Path
 from typing import Annotated
-import enum
 
 import typer
 
-from simple_wikidata_db.preprocess_utils.reader_process import count_lines, read_data
 from simple_wikidata_db.preprocess_utils.mongodb_worker_process import process_data
 from simple_wikidata_db.preprocess_utils.mongodb_writer_process import write_data
+from simple_wikidata_db.preprocess_utils.reader_process import count_lines, read_data
 
 APP = typer.Typer()
 
@@ -127,7 +123,7 @@ def main(
     read_process.join()
     logging.info("Done! Read %s lines", num_lines_read.value)
     # Cause all worker process to quit
-    for work_process in work_processes:
+    for _ in work_processes:
         work_queue.put(None)
     # Now join the work processes
     for work_process in work_processes:

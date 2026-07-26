@@ -1,13 +1,11 @@
-import time
 import logging
+import time
 from dataclasses import dataclass, field
 from multiprocessing import Queue
+from typing import Any
 
 from pymongo import MongoClient
 from pymongo.collection import Collection
-import orjson as json
-
-from typing import Any
 
 TIME_ESTIMATE_REPORT_NUM_LINES = 200_000
 
@@ -73,7 +71,9 @@ def write_data(
     output_queue: Queue,
 ):
     """
-    Reads the json objects from output queue and writes them to mongo db URI database_name collection_name
+    Reads the json objects from output queue and writes them to mongo db URI database_name
+    collection_name
+
     :param uri: mongo db connection uri to write to
     :param database_name: mongo db database name to write to
     :param collection_name: mongo db collection name to write to

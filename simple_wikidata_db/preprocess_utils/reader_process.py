@@ -1,7 +1,7 @@
+import bz2
+import gzip
 from multiprocessing import Queue, Value
 from pathlib import Path
-import gzip
-import bz2
 
 
 def get_file_handle(input_file, Path):
