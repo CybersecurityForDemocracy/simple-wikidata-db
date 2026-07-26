@@ -42,20 +42,23 @@ class MongoDbWriter:
         if self.num_lines_written % TIME_ESTIMATE_REPORT_NUM_LINES == 0:
             self._report_time_elaspsed_and_restart_timer()
 
-    def create_unique_index_on_id_field(self):
-        index_field = 'id'
-        self.logging.info("Creating unique index on field: %s", index_field)
-        self.collection_client.create_index(index_field, unique=True)
+    def create_unique_indices(self, index_field_list: list[str] | None):
+        if not index_field_list:
+            return
+        for index_field in index_field_list:
+            self.logging.info("Creating unique index on field: %s", index_field)
+            self.collection_client.create_index(index_field, unique=True)
 
     def close(self):
         self.client.close()
 
-def write_data(uri: str, database_name: str, collection_name: str, expected_total_num_lines: int, output_queue: Queue):
+def write_data(uri: str, database_name: str, collection_name: str, index_field_list: list[str] | None, expected_total_num_lines: int, output_queue: Queue):
     """
     Reads the json objects from output queue and writes them to mongo db URI database_name collection_name
     :param uri: mongo db connection uri to write to
     :param database_name: mongo db database name to write to
     :param collection_name: mongo db collection name to write to
+    :param index_field_list: list of fields to create single item unique index(es) on.
     :param expected_total_num_lines: number of expected lines input. used for estimated time to
     completion.
     :param work_queue: Queue to push the data to.
@@ -69,6 +72,6 @@ def write_data(uri: str, database_name: str, collection_name: str, expected_tota
             logging.info("writer process received None from queue. Moving to final phase.")
             break
         writer.write(json_object)
-    writer.create_unique_index_on_id_field()
+    writer.create_unique_indices(index_field_list):
     writer.close()
 

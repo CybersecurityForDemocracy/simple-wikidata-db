@@ -145,7 +145,7 @@ def add_qid_as_int(input_data):
     return input_data
 
 
-def process_data(language_id: str, work_queue: Queue, out_queue: Queue):
+def process_data(work_queue: Queue, out_queue: Queue):
     while True:
         json_str = work_queue.get()
         if json_str is None:

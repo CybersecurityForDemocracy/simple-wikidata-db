@@ -15,56 +15,62 @@ import multiprocessing
 from multiprocessing import Queue, Process
 from pathlib import Path
 import time
+from typing import Annotated
+import enum
+
+import typer
 
 from simple_wikidata_db.preprocess_utils.reader_process import count_lines, read_data
 from simple_wikidata_db.preprocess_utils.mongodb_worker_process import process_data
 from simple_wikidata_db.preprocess_utils.mongodb_writer_process import write_data
 
+APP = typer.Typer()
 
-def get_arg_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--input_file', type=str, required=True, help='path to gz wikidata json dump')
-    parser.add_argument('--uri', type=str, required=True, help='uri for mongodb')
-    parser.add_argument('--database', type=str, required=True, help='database for mongodb')
-    parser.add_argument('--collection', type=str, required=True, help='collection for mongodb')
-    #  parser.add_argument('--out_dir', type=str, required=True, help='path to output directory')
-    parser.add_argument('--language_id', type=str, default='en', help='language identifier')
-    parser.add_argument('--processes', type=int, default=90, help="number of concurrent processes to spin off. ")
-    parser.add_argument('--num_lines_read', type=int, default=-1,
-                        help='Terminate after num_lines_read lines are read. Useful for debugging.')
-    parser.add_argument('--num_lines_in_dump', type=int, default=-1, help='Number of lines in dump. If -1, we will count the number of lines.')
-    parser.add_argument('--debug', action='store_true', help='enable debug logging')
-    return parser
+# time.strftime (which logging uses to format asctime) does not have a directive for microseconds,
+# so we use this date format and %(asctime)s,%(msecs)d to get the microseconds in the record
+DEFAULT_LOG_FORMAT = (
+    "%(asctime)s,%(msecs)d %(name)s %(filename)s:%(lineno)s %(levelname)s %(message)s"
+)
+# This format is similar to above with addition of function name
+DEBUG_LOG_FORMAT = (
+    "%(asctime)s,%(msecs)d %(name)s %(filename)s:%(lineno)s->%(funcName)s() %(levelname)s "
+    "%(message)s"
+)
 
 
-def main():
+@APP.command()
+def main(
+    input_file: Annotated[Path, typer.Argument(exists=True, file_okay=True, dir_okay=False,
+                                               readable=True, resolve_path=True, help="gzip or bz2 wikidata entities json file.")],
+    uri: Annotated[str, typer.Option(help='uri for mongodb')],
+    database: Annotated[str, typer.Option(help='database for mongodb')],
+    collection: Annotated[str, typer.Option(help='collection for mongodb')],
+    processes: Annotated[int, typer.Option(help="number of concurrent processes to spin off. ")] = 0,
+    num_lines_read: Annotated[int, typer.Option(help='Terminate after num_lines_read lines are read.  Useful for debugging.')] = -1,
+    num_lines_in_dump: Annotated[int, typer.Option(help='Number of lines in dump. If -1, we will count the number of lines.')] = -1,
+    debug: Annotated[bool, typer.Option(help='enable debug logging')] = False,
+    index_field_list: Annotated[list[str] | None, typer.Option("--index", help='create single item, unique, index for this field')] = None):
     start = time.time()
-    args = get_arg_parser().parse_args()
-    if args.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
 
-    print(f"ARGS: {args}")
-
-    #  out_dir = Path(args.out_dir)
-    #  out_dir.mkdir(exist_ok=True, parents=True)
-    uri = args.uri
-    database = args.database
-    collection = args.collection
-
-    input_file = Path(args.input_file)
-    assert input_file.exists(), f"Input file {input_file} does not exist"
+    logging.basicConfig(
+        format=DEBUG_LOG_FORMAT if debug else DEFAULT_LOG_FORMAT,
+        datefmt="%Y-%m-%d %H:%M:%S",
+        level=logging.DEBUG if debug else logging.INFO,
+    )
 
     logging.info("Will write entities from %s to URI: %s database: %s collection: %s", input_file, uri, database, collection)
 
-    max_lines_to_read = args.num_lines_read
-    if args.num_lines_in_dump <= 0:
-        print("Counting lines")
+    max_lines_to_read = num_lines_read
+    if num_lines_in_dump <= 0:
+        logging.info("Counting lines")
         total_num_lines = count_lines(input_file, max_lines_to_read)
     else:
-        total_num_lines = args.num_lines_in_dump
+        total_num_lines = num_lines_in_dump
 
-    print("Starting processes")
-    maxsize = 10 * args.processes
+    if processes == 0:
+        processes = multiprocessing.cpu_count()
+    logging.info("Starting %d processes", processes)
+    maxsize = 10 * processes
 
     # Queues for inputs/outputs
     output_queue = Queue(maxsize=maxsize)
@@ -81,22 +87,22 @@ def main():
 
     write_process = Process(
         target=write_data,
-        args=(uri, database, collection, total_num_lines, output_queue)
+        args=(uri, database, collection, index_field_list, total_num_lines, output_queue)
     )
     write_process.start()
 
     work_processes = []
-    for _ in range(max(1, args.processes-2)):
+    for _ in range(max(1, processes-2)):
         work_process = Process(
             target=process_data,
-            args=(args.language_id, work_queue, output_queue)
+            args=(work_queue, output_queue)
         )
         work_process.daemon = True
         work_process.start()
         work_processes.append(work_process)
 
     read_process.join()
-    print(f"Done! Read {num_lines_read.value} lines")
+    logging.info("Done! Read %s lines", num_lines_read.value)
     # Cause all worker process to quit
     for work_process in work_processes:
         work_queue.put(None)
@@ -106,8 +112,8 @@ def main():
     output_queue.put(None)
     write_process.join()
 
-    print(f"Finished processing {num_lines_read.value} in {time.time() - start}s")
+    logging.info("Finished processing %s in %s s", num_lines_read.value, time.time() - start)
 
 
 if __name__ == "__main__":
-    main()
+    APP()
