@@ -55,7 +55,7 @@ class MongoDbWriter:
         if not index_field_list:
             return
         for index_field in index_field_list:
-            self.logging.info("Creating unique index on field: %s", index_field)
+            logging.info("Creating unique index on field: %s", index_field)
             self.collection_client.create_index(index_field, unique=True)
 
     def close(self):
