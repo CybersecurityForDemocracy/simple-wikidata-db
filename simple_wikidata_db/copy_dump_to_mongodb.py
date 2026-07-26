@@ -9,6 +9,7 @@ python3 preprocess_dump.py \
     --out_dir data/processed
 
 """
+
 import logging
 import argparse
 import multiprocessing
@@ -40,16 +41,36 @@ DEBUG_LOG_FORMAT = (
 
 @APP.command()
 def main(
-    input_file: Annotated[Path, typer.Argument(exists=True, file_okay=True, dir_okay=False,
-                                               readable=True, resolve_path=True, help="gzip or bz2 wikidata entities json file.")],
-    uri: Annotated[str, typer.Option(help='uri for mongodb')],
-    database: Annotated[str, typer.Option(help='database for mongodb')],
-    collection: Annotated[str, typer.Option(help='collection for mongodb')],
-    processes: Annotated[int, typer.Option(help="number of concurrent processes to spin off. ")] = 0,
-    num_lines_read: Annotated[int, typer.Option(help='Terminate after num_lines_read lines are read.  Useful for debugging.')] = -1,
-    num_lines_in_dump: Annotated[int, typer.Option(help='Number of lines in dump. If -1, we will count the number of lines.')] = -1,
-    debug: Annotated[bool, typer.Option(help='enable debug logging')] = False,
-    index_field_list: Annotated[list[str] | None, typer.Option("--index", help='create single item, unique, index for this field')] = None):
+    input_file: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            file_okay=True,
+            dir_okay=False,
+            readable=True,
+            resolve_path=True,
+            help="gzip or bz2 wikidata entities json file.",
+        ),
+    ],
+    uri: Annotated[str, typer.Option(help="uri for mongodb")],
+    database: Annotated[str, typer.Option(help="database for mongodb")],
+    collection: Annotated[str, typer.Option(help="collection for mongodb")],
+    processes: Annotated[
+        int, typer.Option(help="number of concurrent processes to spin off. ")
+    ] = 0,
+    num_lines_read: Annotated[
+        int,
+        typer.Option(help="Terminate after num_lines_read lines are read.  Useful for debugging."),
+    ] = -1,
+    num_lines_in_dump: Annotated[
+        int, typer.Option(help="Number of lines in dump. If -1, we will count the number of lines.")
+    ] = -1,
+    debug: Annotated[bool, typer.Option(help="enable debug logging")] = False,
+    index_field_list: Annotated[
+        list[str] | None,
+        typer.Option("--index", help="create single item, unique, index for this field"),
+    ] = None,
+):
     start = time.time()
 
     logging.basicConfig(
@@ -58,7 +79,13 @@ def main(
         level=logging.DEBUG if debug else logging.INFO,
     )
 
-    logging.info("Will write entities from %s to URI: %s database: %s collection: %s", input_file, uri, database, collection)
+    logging.info(
+        "Will write entities from %s to URI: %s database: %s collection: %s",
+        input_file,
+        uri,
+        database,
+        collection,
+    )
 
     max_lines_to_read = num_lines_read
     if num_lines_in_dump <= 0:
@@ -79,24 +106,20 @@ def main(
     # Processes for reading/processing/writing
     num_lines_read = multiprocessing.Value("i", 0)
     read_process = Process(
-        target=read_data,
-        args=(input_file, num_lines_read, max_lines_to_read, work_queue)
+        target=read_data, args=(input_file, num_lines_read, max_lines_to_read, work_queue)
     )
 
     read_process.start()
 
     write_process = Process(
         target=write_data,
-        args=(uri, database, collection, index_field_list, total_num_lines, output_queue)
+        args=(uri, database, collection, index_field_list, total_num_lines, output_queue),
     )
     write_process.start()
 
     work_processes = []
-    for _ in range(max(1, processes-2)):
-        work_process = Process(
-            target=process_data,
-            args=(work_queue, output_queue)
-        )
+    for _ in range(max(1, processes - 2)):
+        work_process = Process(target=process_data, args=(work_queue, output_queue))
         work_process.daemon = True
         work_process.start()
         work_processes.append(work_process)

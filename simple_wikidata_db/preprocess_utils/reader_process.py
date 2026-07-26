@@ -3,6 +3,7 @@ from pathlib import Path
 import gzip
 import bz2
 
+
 def count_lines(input_file: Path, max_lines_to_read: int):
     cnt = 0
     if input_file.suffix == ".bz2":
@@ -17,6 +18,7 @@ def count_lines(input_file: Path, max_lines_to_read: int):
         if max_lines_to_read > 0 and cnt >= max_lines_to_read:
             break
     return cnt
+
 
 def read_data(input_file: Path, num_lines_read: Value, max_lines_to_read: int, work_queue: Queue):
     """

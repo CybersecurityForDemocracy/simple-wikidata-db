@@ -3,9 +3,10 @@ from multiprocessing import Queue
 
 import orjson
 
+
 def add_qid_as_int(input_data):
-    qid = input_data['id']
-    input_data['qid'] = int(qid[1:])
+    qid = input_data["id"]
+    input_data["qid"] = int(qid[1:])
     return input_data
 
 
