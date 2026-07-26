@@ -20,7 +20,6 @@ import typer
 from pymongo import MongoClient
 from tqdm import tqdm
 
-from simple_wikidata_db.preprocess_utils.mongodb_worker_process import process_data
 from simple_wikidata_db.preprocess_utils.mongodb_writer_process import write_data
 from simple_wikidata_db.preprocess_utils.reader_process import count_lines, read_data
 
@@ -93,19 +92,14 @@ def main(
     else:
         total_num_lines = num_lines_in_dump
 
-    if processes == 0:
-        processes = multiprocessing.cpu_count()
-    logging.info("Starting %d processes", processes)
-    maxsize = 10 * processes
+    maxsize = 100
 
-    # Queues for inputs/outputs
+    # Queue for reader output -> writer input
     output_queue = Queue(maxsize=maxsize)
-    work_queue = Queue(maxsize=maxsize)
 
-    # Processes for reading/processing/writing
     num_lines_read = multiprocessing.Value("i", 0)
     read_process = Process(
-        target=read_data, args=(input_file, num_lines_read, max_lines_to_read, work_queue)
+        target=read_data, args=(input_file, num_lines_read, max_lines_to_read, output_queue)
     )
 
     read_process.start()
@@ -116,21 +110,9 @@ def main(
     )
     write_process.start()
 
-    work_processes = []
-    for _ in range(max(1, processes - 2)):
-        work_process = Process(target=process_data, args=(work_queue, output_queue))
-        work_process.daemon = True
-        work_process.start()
-        work_processes.append(work_process)
-
     read_process.join()
     logging.info("Done! Read %s lines", num_lines_read.value)
-    # Cause all worker process to quit
-    for _ in work_processes:
-        work_queue.put(None)
-    # Now join the work processes
-    for work_process in work_processes:
-        work_process.join()
+
     output_queue.put(None)
     write_process.join()
 
@@ -138,7 +120,10 @@ def main(
 
 
 @APP.command(
-    help="Add sqid data to existing wikidata entities in mongodb. adds new top level key |sqid| mapping to sqid data. expects JSON from https://sqid.toolforge.org/#/"
+    help=(
+        "Add sqid data to existing wikidata entities in mongodb. adds new top level key |sqid| "
+        "mapping to sqid data. expects JSON from https://sqid.toolforge.org/#/"
+    )
 )
 def sqid(
     input_file: Annotated[

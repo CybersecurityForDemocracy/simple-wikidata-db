@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from multiprocessing import Queue
 from typing import Any
 
+import orjson
 from pymongo import MongoClient
 from pymongo.collection import Collection
 
@@ -68,7 +69,7 @@ def write_data(
     collection_name: str,
     index_field_list: list[str] | None,
     expected_total_num_lines: int,
-    output_queue: Queue,
+    work_queue: Queue,
 ):
     """
     Reads the json objects from output queue and writes them to mongo db URI database_name
@@ -89,11 +90,13 @@ def write_data(
         expected_total_num_lines=expected_total_num_lines,
     )
     while True:
-        json_object = output_queue.get()
-        logging.debug("write_data received: %r", json_object)
-        if json_object is None:
-            logging.info("writer process received None from queue. Moving to final phase.")
+        json_str = work_queue.get()
+        if json_str is None:
             break
+        if len(json_str) == 0:
+            continue
+        json_object = orjson.loads(json_str)
+        logging.debug("write_data received: %r", json_object)
         writer.write(json_object)
     writer.create_unique_indices(index_field_list)
     writer.close()
