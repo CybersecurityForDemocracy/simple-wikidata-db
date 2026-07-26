@@ -4,20 +4,24 @@ import gzip
 import bz2
 
 
-def count_lines(input_file: Path, max_lines_to_read: int):
-    cnt = 0
+def get_file_handle(input_file, Path):
     if input_file.suffix == ".bz2":
-        f = bz2.open(input_file, "r")
+        return bz2.open(input_file, "r")
     elif input_file.suffix == ".gz":
-        f = gzip.open(input_file, "rb")
+        return gzip.open(input_file, "rb")
     else:
         raise ValueError(f"The file must be either .bz2 or .gz, but got {input_file.suffix}.")
 
-    for _ in f:
-        cnt += 1
-        if max_lines_to_read > 0 and cnt >= max_lines_to_read:
-            break
-    return cnt
+
+def count_lines(input_file: Path, max_lines_to_read: int):
+    cnt = 0
+
+    with get_file_handle(input_file) as f:
+        for _ in f:
+            cnt += 1
+            if max_lines_to_read > 0 and cnt >= max_lines_to_read:
+                break
+        return cnt
 
 
 def read_data(input_file: Path, num_lines_read: Value, max_lines_to_read: int, work_queue: Queue):
@@ -28,26 +32,18 @@ def read_data(input_file: Path, num_lines_read: Value, max_lines_to_read: int, w
     :param max_lines_to_read: Maximum number of lines to read from the input file (for testing).
     :param work_queue: Queue to push the data to.
     """
-    if input_file.suffix == ".bz2":
-        f = bz2.open(input_file, "r")
-    elif input_file.suffix == ".gz":
-        f = gzip.GzipFile(input_file, "r")
-    else:
-        raise ValueError(f"The file must be either .bz2 or .gz, but got {input_file.suffix}.")
 
-    num_lines = 0
-    for ln in f:
-        if ln == b"[\n" or ln == b"]\n":
-            continue
-        if ln.endswith(b",\n"):  # all but the last element
-            obj = ln[:-2]
-        else:
-            obj = ln
-        num_lines += 1
-        work_queue.put(obj)
-        if 0 < max_lines_to_read <= num_lines:
-            break
-    num_lines_read.value = num_lines
-
-    f.close()
-    return
+    with get_file_handle(input_file) as f:
+        num_lines = 0
+        for ln in f:
+            if ln == b"[\n" or ln == b"]\n":
+                continue
+            if ln.endswith(b",\n"):  # all but the last element
+                obj = ln[:-2]
+            else:
+                obj = ln
+            num_lines += 1
+            work_queue.put(obj)
+            if 0 < max_lines_to_read <= num_lines:
+                break
+        num_lines_read.value = num_lines
