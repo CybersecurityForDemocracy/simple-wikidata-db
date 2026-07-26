@@ -27,3 +27,28 @@ include = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["simple_wikidata_db"]
+
+[tool.ruff]
+line-length=100
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E", "W",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]
+ignore=[
+  # Do not suggest ternary operator
+  "SIM108",
+  # allow f-string in exception constructor
+  "TRY003",
+]
