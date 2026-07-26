@@ -18,6 +18,7 @@ from typing import Annotated
 import orjson
 import typer
 from pymongo import MongoClient
+from tqdm import tqdm
 
 from simple_wikidata_db.preprocess_utils.mongodb_worker_process import process_data
 from simple_wikidata_db.preprocess_utils.mongodb_writer_process import write_data
@@ -137,7 +138,7 @@ def main(
 
 
 @APP.command(
-    help="Add sqid data to existing wikidata entities in mongodb. expects JSON from https://sqid.toolforge.org/#/"
+    help="Add sqid data to existing wikidata entities in mongodb. adds new top level key |sqid| mapping to sqid data. expects JSON from https://sqid.toolforge.org/#/"
 )
 def sqid(
     input_file: Annotated[
@@ -163,7 +164,7 @@ def sqid(
     )
 
     logging.info(
-        "Will write entities from %s to URI: %s database: %s collection: %s",
+        "Will add sqid data from %s to URI: %s database: %s collection: %s",
         input_file,
         uri,
         database,
@@ -178,7 +179,7 @@ def sqid(
 
     sqid_hiearchy = orjson.loads(input_file.read_bytes())
     logging.info("Got %d entires from %s", len(sqid_hiearchy), input_file)
-    for qid, value in sqid_hiearchy.items():
+    for qid, value in tqdm(sqid_hiearchy.items()):
         update_result = collection_client.update_one(
             {"id": f"Q{qid}"}, {"$set": {"sqid": value}}, upsert=False
         )
