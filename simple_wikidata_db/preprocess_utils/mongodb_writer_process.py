@@ -72,6 +72,6 @@ def write_data(uri: str, database_name: str, collection_name: str, index_field_l
             logging.info("writer process received None from queue. Moving to final phase.")
             break
         writer.write(json_object)
-    writer.create_unique_indices(index_field_list):
+    writer.create_unique_indices(index_field_list)
     writer.close()
 
