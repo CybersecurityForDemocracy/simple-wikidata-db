@@ -20,7 +20,7 @@ class MongoDbWriter:
     last_time_estimate_report_time: float = field(init=False)
     client: MongoClient = field(init=False)
     collection_client: Collection = field(init=False)
-    num_lines_written: int = field(default=0)
+    num_lines_written: int = 0
 
     def __post_init__(self):
         self.client = MongoClient(self.uri)
@@ -34,12 +34,18 @@ class MongoDbWriter:
         logging.info("%d/%d lines written in %.2f s. Estimated time to completion is %.2f hours.", self.num_lines_written, self.expected_total_num_lines, time_elapsed, estimated_time)
         self.last_time_estimate_report_time = time.time()
 
+    # TODO(macpd): replace instead of inserting dupe
     def write(self, json_obj: dict[str, Any]):
         logging.debug("insert_many: %r")
         self.collection_client.insert_one(json_obj)
         self.num_lines_written += 1
         if self.num_lines_written % TIME_ESTIMATE_REPORT_NUM_LINES == 0:
             self._report_time_elaspsed_and_restart_timer()
+
+    def create_unique_index_on_id_field(self):
+        index_field = 'id'
+        self.logging.info("Creating unique index on field: %s", index_field)
+        self.collection_client.create_index(index_field, unique=True)
 
     def close(self):
         self.client.close()
@@ -60,8 +66,9 @@ def write_data(uri: str, database_name: str, collection_name: str, expected_tota
         json_object = output_queue.get()
         logging.debug("write_data received: %r", json_object)
         if json_object is None:
-            logging.info("writer process received None from queue. quiting")
+            logging.info("writer process received None from queue. Moving to final phase.")
             break
         writer.write(json_object)
+    writer.create_unique_index_on_id_field()
     writer.close()
 
