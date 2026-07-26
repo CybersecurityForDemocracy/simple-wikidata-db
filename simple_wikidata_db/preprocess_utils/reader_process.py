@@ -4,7 +4,7 @@ from multiprocessing import Queue, Value
 from pathlib import Path
 
 
-def get_file_handle(input_file, Path):
+def get_file_handle(input_file: Path):
     if input_file.suffix == ".bz2":
         return bz2.open(input_file, "r")
     elif input_file.suffix == ".gz":
