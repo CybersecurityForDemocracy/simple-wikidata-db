@@ -11,7 +11,11 @@ dependencies = [
   "tqdm",
   "orjson",
   "pymongo",
+  "typer",
 ]
+
+[project.scripts]
+copy-to-mongo = "simple_wikidata_db.copy_dump_to_mongodb:APP"
 
 [tool.hatch.version]
 path = "simple_wikidata_db/__version__.py"
