@@ -63,7 +63,7 @@ class MongoDbWriter:
         if not index_field_list:
             return
         logging.info("Creating text index on fields: %s", index_field_list)
-        self.collection_client.create_index({field: 'text' for field in text_index_field_list})
+        self.collection_client.create_index({field: 'text' for field in index_field_list})
 
     def close(self):
         self.client.close()
@@ -85,7 +85,8 @@ def write_data(
     :param uri: mongo db connection uri to write to
     :param database_name: mongo db database name to write to
     :param collection_name: mongo db collection name to write to
-    :param index_field_list: list of fields to create single item unique index(es) on.
+    :param unique_index_field_list: list of fields to create single item unique index(es) on.
+    :param text_index_field_list: list of fields to create text index on.
     :param expected_total_num_lines: number of expected lines input. used for estimated time to
     completion.
     :param work_queue: Queue to push the data to.
