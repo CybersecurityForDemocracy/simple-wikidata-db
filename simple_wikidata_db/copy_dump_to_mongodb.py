@@ -64,9 +64,13 @@ def main(
         int, typer.Option(help="Number of lines in dump. If -1, we will count the number of lines.")
     ] = -1,
     debug: Annotated[bool, typer.Option(help="enable debug logging")] = False,
-    index_field_list: Annotated[
+    unique_index_field_list: Annotated[
         list[str] | None,
-        typer.Option("--index", help="create single item, unique, index for this field"),
+        typer.Option("--unique-index", help="create single item, unique, index for this field"),
+    ] = None,
+    text_index_field_list: Annotated[
+        list[str] | None,
+        typer.Option("--text-index", help="create single item text index for this field"),
     ] = None,
 ):
     start = time.time()
@@ -106,7 +110,7 @@ def main(
 
     write_process = Process(
         target=write_data,
-        args=(uri, database, collection, index_field_list, total_num_lines, output_queue),
+        args=(uri, database, collection, unique_index_field_list, text_index_field_list, total_num_lines, output_queue),
     )
     write_process.start()
 

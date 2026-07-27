@@ -59,6 +59,12 @@ class MongoDbWriter:
             logging.info("Creating unique index on field: %s", index_field)
             self.collection_client.create_index(index_field, unique=True)
 
+    def create_text_indices(self, index_field_list: list[str] | None):
+        if not index_field_list:
+            return
+        logging.info("Creating text index on fields: %s", index_field_list)
+        self.collection_client.create_index({field: 'text' for field in text_index_field_list})
+
     def close(self):
         self.client.close()
 
@@ -67,7 +73,8 @@ def write_data(
     uri: str,
     database_name: str,
     collection_name: str,
-    index_field_list: list[str] | None,
+    unique_index_field_list: list[str] | None,
+    text_index_field_list: list[str] | None,
     expected_total_num_lines: int,
     work_queue: Queue,
 ):
@@ -98,5 +105,6 @@ def write_data(
         json_object = orjson.loads(json_str)
         logging.debug("write_data received: %r", json_object)
         writer.write(json_object)
-    writer.create_unique_indices(index_field_list)
+    writer.create_unique_indices(unique_index_field_list)
+    writer.create_text_indices(text_index_field_list)
     writer.close()
